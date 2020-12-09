@@ -1,0 +1,144 @@
+#!/bin/bash
+
+# Copy this to .bashrc and uncomment:
+#if [ -f ~/.bash_fu ]; then
+#    . ~/.bash_fu
+#fi
+
+# Then source or re-login:
+# source ~/.bash_fu
+
+
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+alias ..="cd .."
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .....='cd ../../../..'
+alias plz='sudo $(fc -ln -1)'
+alias share='python -m SimpleHTTPServer'
+alias share_ftp_ro='python -m pyftpdlib --directory=FTP --port=2121'
+alias share_ftp_wr='python -m pyftpdlib --directory=FTP --port=2121 --write'
+alias mcm='make clean && make'
+alias mmi='make && make install'
+alias mcmmi='make clean && make && make install'
+alias chx='chmod +x'
+alias rl='readlink -f'
+alias psauxgrep='ps aux | grep -v grep | grep'
+
+
+# Networking
+alias ips='ip addr show'
+alias myip='curl ifconfig.co/ip'
+alias hosts='sudo vim /etc/hosts; sudo service nscd restart'
+alias interfaces='sudo vim /etc/network/interfaces; sudo service networking restart'
+
+
+# Git
+alias ,gs='git log --oneline -n1; git status'
+alias ,gl='git lg'
+alias ,gd='git difftool'
+alias ,gdc='git difftool --cached'
+alias ,gb='git branch -vv'
+alias ,gc='git checkout'
+
+,gd-commits() { git difftool HEAD~$1 HEAD; }
+
+
+# Apt
+agi() {
+  sudo apt-get update
+  sudo apt-get install $@
+}
+
+ags() {
+  apt-cache search $@
+}
+
+agr() {
+  sudo apt-get remove $@
+}
+
+
+# Misc
+cls() { cd "$1" && ls; }
+mcd() { mkdir -p "$1" && cd "$1"; }
+backup() { cp "$1"{,.bak}; }
+
+hdd () {
+  echo "Device         Total  Used  Free  Pct MntPoint"
+  df -h | grep "/home"
+  df -h | grep "/media/downloads"
+}
+
+pingi () {
+  if [ -z $1 ]; then
+    echo "Usage: `basename $0` [HOST]"
+    exit 1
+  fi
+
+  while :; do
+    result=`ping -W 1 -c 1 $1 | grep 'bytes from '`
+    if [ $? -gt 0 ]; then
+      echo -e "`date +'%H:%M:%S'` - $1 is \033[0;91mdown\033[0m"
+    else
+      echo -e "`date +'%H:%M:%S'` - $1 is \033[0;92mok\033[0m"
+      sleep 1 # avoid ping rain
+    fi
+  done
+}
+
+extract() { 
+    if [ -f $1 ] ; then 
+      case $1 in 
+        *.tar.bz2)   tar xjf $1     ;; 
+        *.tar.gz)    tar xzf $1     ;; 
+        *.bz2)       bunzip2 $1     ;; 
+        *.rar)       unrar e $1     ;; 
+        *.gz)        gunzip $1      ;; 
+        *.tar)       tar xf $1      ;; 
+        *.tbz2)      tar xjf $1     ;; 
+        *.tgz)       tar xzf $1     ;; 
+        *.zip)       unzip $1       ;; 
+        *.Z)         uncompress $1  ;; 
+        *.7z)        7z x $1        ;; 
+        *)     echo "'$1' cannot be extracted via extract()" ;; 
+         esac 
+     else 
+         echo "'$1' is not a valid file" 
+     fi 
+}
+
+where() {
+  find . -name *$1*
+}
+
+
+,convert-to-utf-8() {
+  if [[ $(chardet $1 | grep windows-1251) ]]; then
+    iconv -f WINDOWS-1251 -t UTF-8 $1 -o $1.utf8
+    mv $1.utf8 $1
+  fi
+}
+
+,check-ip-conflicts() {
+  MY_IPS=$(ip addr show | grep -Po 'inet \K[\d.]+')
+  for ip in $MY_IPS; do
+    if arping -q -I enp6s0 -c 1 $ip; then
+      echo -e "$ip \033[0;91mduplicate\033[0m"
+    else
+      echo -e "$ip \033[0;92mok\033[0m"
+      sleep 1 # avoid ping rain
+    fi
+  done
+}
+
+,make-sh(){
+    echo "#!/bin/bash" > $1.sh
+    chmod +x $1.sh
+}
+
+,gdb-bt() {
+  gdb -batch -ex "bt" $@
+}
